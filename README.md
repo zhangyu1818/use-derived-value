@@ -46,3 +46,10 @@ function App() {
 }
 ```
 
+## API
+
+```javascript
+const useDerivedValue = (initialState, getDerivedValue)
+```
+
+`getDerivedValue` is a function,return a new value to the state or null.
