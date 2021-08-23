@@ -15,22 +15,13 @@ import React from "react";
 import useDerivedValue from "use-derived-value";
 
 const Input = (props) => {
-  const [state, setState] = useDerivedValue("value", () => {
-    if ("value" in props) {
-      return props.value;
-    }
-    return null;
-  });
+    const defaultValue = props.defaultValue ?? props.value;
+    const [state, setState] = useDerivedState(defaultValue, {
+        postState: () => props.value ?? null,
+        onChange: props.onChange
+    });
 
-  const onInputChange = (event) => {
-    if ("onChange" in props) {
-      props.onChange(event);
-    } else {
-      setState(event.target.value);
-    }
-  };
-
-  return <input value={state} onChange={onInputChange} />;
+  return <input value={state} onChange={setState} />;
 };
 
 function App() {
@@ -48,8 +39,15 @@ function App() {
 
 ## API
 
-```javascript
-const useDerivedValue = (initialState, getDerivedValue)
+```typescript
+const useDerivedValue = (initialState, Options)
+
+type Options<State> = {
+    postState?: () => State | null;
+    onChange?: (value: State, prevValue: State) => void;
+};
 ```
 
-`getDerivedValue` is a function,return a new value to the state or null.
+`postState` is a function,return a new value to the state or null.
+
+`onChange` will called when set new value.
