@@ -1,38 +1,43 @@
-import * as React from 'react';
+import * as React from 'react'
 
 type Options<State> = {
-  postState?: () => State | null;
-  onChange?: (value: State, prevValue: State) => void;
-};
+    postState?: () => State | null
+    onChange?: (value: State, prevValue: State) => void
+}
 
-type SetState<T> = React.Dispatch<React.SetStateAction<T>>;
+type SetState<T> = React.Dispatch<React.SetStateAction<T>>
 
-const useDerivedValue = <T>(initialState: T, options: Options<T> = {}): [T, SetState<T>] => {
-  const { postState = () => null, onChange } = options;
+const noop = () => null
 
-  const rerender = React.useState({})[1];
+const useDerivedValue = <State>(initialState: State, options: Options<State> = {}) => {
+    const { postState = noop, onChange } = options
 
-  const stateRef = React.useRef(initialState);
+    const rerender = React.useReducer(v => v + 1, 0)[1]
 
-  const derivedState = postState();
+    const stateRef = React.useRef(initialState)
 
-  if (derivedState !== null && derivedState !== stateRef.current) {
-    stateRef.current = derivedState;
-  }
+    const onChangeRef = React.useRef(onChange)
+    onChangeRef.current = onChange
 
-  const setState = React.useRef<SetState<T>>((value) => {
-    let newState: T;
-    if (typeof value === 'function') {
-      newState = (value as (prevState: T) => T)(stateRef.current);
-    } else {
-      newState = value;
+    const derivedState = postState()
+
+    if (derivedState !== null && derivedState !== stateRef.current) {
+        stateRef.current = derivedState
     }
-    onChange?.(newState, stateRef.current);
-    stateRef.current = newState;
-    rerender({});
-  });
 
-  return [stateRef.current, setState.current];
-};
+    const setState = React.useRef<SetState<State>>(value => {
+        let newState: State
+        if (typeof value === 'function') {
+            newState = (value as (prevState: State) => State)(stateRef.current)
+        } else {
+            newState = value
+        }
+        onChangeRef.current?.(newState, stateRef.current)
+        stateRef.current = newState
+        rerender()
+    })
 
-export default useDerivedValue;
+    return [stateRef.current, setState.current] as const
+}
+
+export default useDerivedValue
